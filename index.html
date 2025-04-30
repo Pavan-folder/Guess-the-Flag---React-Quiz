@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Country Quiz | devChallenges.io</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+  <div class="quiz-container">
+    <div class="score-display">0/10 Points</div>
+    <h1>Country Quiz</h1>
+
+    <div class="question-counter" id="question-counter"></div>
+
+    <div class="question-text" id="question-text">
+      Which country does this flag
+      <img id="question-flag-icon" src="" alt="Question Flag">
+      belong to?
+    </div>
+
+    <div class="options-grid" id="options-container"></div>
+
+    <button class="next-btn" id="next-btn">Next</button>
+    <button class="restart-btn" id="restart-btn" style="display: none;">Restart Quiz</button> <!-- 🔥 Restart button -->
+  </div>
+
+  <script>
+    const scoreDisplay = document.querySelector('.score-display');
+    const optionsContainer = document.getElementById('options-container');
+    const nextBtn = document.getElementById('next-btn');
+    const restartBtn = document.getElementById('restart-btn');
+    const questionText = document.getElementById('question-text');
+    const questionCounter = document.getElementById('question-counter');
+    let questionFlagIcon = document.getElementById('question-flag-icon'); // 🔥 Changed to 'let'
+
+    let countries = [];
+    let currentQuestionIndex = 0;
+    let score = 0;
+    const numberOfQuestions = 10;
+    let correctCountry = null;
+
+    function shuffle(array) {
+      return array.sort(() => Math.random() - 0.5);
+    }
+
+    function createQuestionCounter() {
+      questionCounter.innerHTML = '';
+      for (let i = 1; i <= numberOfQuestions; i++) {
+        const circle = document.createElement('div');
+        circle.className = 'counter-item';
+        if (i === 1) circle.classList.add('active');
+        circle.textContent = i;
+        questionCounter.appendChild(circle);
+      }
+    }
+
+    function updateQuestionCounter() {
+      const circles = document.querySelectorAll('.counter-item');
+      circles.forEach((circle, index) => {
+        circle.classList.toggle('active', index === currentQuestionIndex);
+      });
+    }
+
+    function loadQuestion() {
+      optionsContainer.innerHTML = '';
+     
+      restartBtn.style.display = 'none';
+
+      const shuffledCountries = shuffle([...countries]).slice(0, 4);
+      correctCountry = shuffledCountries[Math.floor(Math.random() * 4)];
+
+      questionFlagIcon.src = correctCountry.flags.png;
+
+      shuffledCountries.forEach(country => {
+        const button = document.createElement('button');
+        button.className = 'option-btn';
+        button.textContent = country.name.common;
+        button.addEventListener('click', () => selectAnswer(button, country));
+        optionsContainer.appendChild(button);
+      });
+
+      updateQuestionCounter();
+    }
+
+    function selectAnswer(button, selectedCountry) {
+      const buttons = document.querySelectorAll('.option-btn');
+
+      buttons.forEach(btn => btn.disabled = true);
+
+
+
+      if (selectedCountry.name.common === correctCountry.name.common) {
+        button.classList.add('correct');
+        score++;
+        let checkmarkImage = document.createElement('img');
+        checkmarkImage.className = 'checkmark';
+        checkmarkImage.src = 'Check_round_fill.svg';
+        button.appendChild(checkmarkImage);
+      } else {
+        button.classList.add('incorrect');
+        let wrongCheckmark = document.createElement('img');
+        wrongCheckmark.className = 'checkmark';
+        wrongCheckmark.src = 'Close_round_fill.svg';
+        button.appendChild(wrongCheckmark);
+
+        buttons.forEach(btn => {
+          if (btn.textContent === correctCountry.name.common) {
+            btn.classList.add('correct');
+            let correctCheckmark = document.createElement('img');
+            correctCheckmark.className = 'checkmark';
+            correctCheckmark.src = 'Check_round_fill.svg';
+            btn.appendChild(correctCheckmark);
+          }
+        });
+      }
+
+      scoreDisplay.textContent = `${score}/${numberOfQuestions} Points`;
+
+      setTimeout(() => {
+        currentQuestionIndex++;
+        if (currentQuestionIndex < numberOfQuestions) {
+          loadQuestion();
+        } else {
+          endQuiz();
+        }
+      }, 2000);
+    }
+
+    function endQuiz() {
+      questionText.innerHTML = `🎉 You scored <strong>${score}/${numberOfQuestions}</strong>`;
+      optionsContainer.innerHTML = '';
+      nextBtn.style.display = 'none';
+      restartBtn.style.display = 'inline-block';
+    }
+
+    function restartQuiz() {
+      currentQuestionIndex = 0;
+      score = 0;
+      scoreDisplay.textContent = `0/${numberOfQuestions} Points`;
+      createQuestionCounter();
+      questionText.innerHTML = `Which country does this flag <img id="question-flag-icon" src="" alt="Question Flag"> belong to?`;
+      questionFlagIcon = document.getElementById('question-flag-icon'); // 🔥 rebind new img
+      loadQuestion();
+    }
+
+    restartBtn.addEventListener('click', restartQuiz);
+
+    fetch('https://restcountries.com/v3.1/all')
+      .then(res => res.json())
+      .then(data => {
+        countries = data;
+        if (countries.length >= 4) {
+          createQuestionCounter();
+          loadQuestion();
+        }
+      })
+      .catch(err => {
+        console.error('Error fetching countries:', err);
+      });
+
+  </script>
+
+</body>
+
+</html>
+
+
+
+
+
+
+
